@@ -1,9 +1,15 @@
 tensorflow
 keras
 segmentation-models
+tensorflow
+keras
+segmentation-models
 efficientnet
 opencv-python
 Pillow
 numpy
 matplotlib
 gradio
+django
+gunicorn
+whitenoise
