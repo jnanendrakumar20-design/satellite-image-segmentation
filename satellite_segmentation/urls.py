@@ -44,6 +44,7 @@ urlpatterns = [
     path("UserHome/", usr.UserHome, name="UserHome"),
     path("index/", usr.index, name="index"),
     path('predict/', usr.index1, name='predict'),
+    path('api/predict/', usr.api_predict, name='api_predict'),
 
 ]
 

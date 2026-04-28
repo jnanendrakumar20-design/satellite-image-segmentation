@@ -189,3 +189,43 @@ def index1(request):
             })
 
     return render(request, 'users/index1.html')
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import base64
+from io import BytesIO
+
+@csrf_exempt
+def api_predict(request):
+    if request.method == 'POST':
+        if 'image' in request.FILES:
+            try:
+                img_file = request.FILES['image']
+                img = Image.open(img_file).convert("RGB")
+                img_np = np.array(img)
+                
+                # Perform prediction
+                mask, confidence = predict_mask(img)
+                
+                # Overlay mask
+                result_img = overlay_mask(img, mask)
+                
+                # Get distribution
+                distribution = get_class_distribution(mask)
+                
+                # Convert result image to base64
+                buffered = BytesIO()
+                result_img.save(buffered, format="PNG")
+                img_str = base64.b64encode(buffered.getvalue()).decode()
+                
+                return JsonResponse({
+                    'success': True,
+                    'confidence': confidence,
+                    'distribution': distribution,
+                    'result_image': f"data:image/png;base64,{img_str}",
+                    'classes': ['Unlabeled', 'Building', 'Land', 'Road', 'Vegetation', 'Water']
+                })
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        return JsonResponse({'success': False, 'error': 'No image uploaded'}, status=400)
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
