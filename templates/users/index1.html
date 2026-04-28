@@ -1,0 +1,476 @@
+{% extends 'users/userbase.html' %}
+
+{% block contents %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Semantic Segmentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --dark-color: #2b2d42;
+            --light-color: #f8f9fa;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7ff;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            margin-top: 30px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            background-color: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-color);
+            background-color: #f0f8ff;
+        }
+
+        .upload-area.active {
+            border-color: var(--success-color);
+            background-color: #e6f7ff;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .result-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .image-box {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .image-box img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .image-box img:hover {
+            transform: scale(1.02);
+        }
+
+        .image-box h3 {
+            margin-top: 15px;
+            color: var(--dark-color);
+            text-align: center;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            transition: all 0.2s;
+        }
+
+        .legend-item:hover {
+            background-color: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .color-box {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .stats {
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card h4 {
+            margin-top: 0;
+            color: var(--dark-color);
+            font-size: 16px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: var(--warning-color);
+            background-color: #fff0f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .result-container {
+                flex-direction: column;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><i class="fas fa-robot"></i> AI Semantic Segmentation</h1>
+        
+        <div class="card">
+            <h2><i class="fas fa-cloud-upload-alt"></i> Upload Image</h2>
+            <form method="POST" enctype="multipart/form-data" id="segmentation-form">
+                {% csrf_token %}
+                
+                <label for="file-input">
+                    <div class="upload-area" id="upload-area">
+                        <i class="fas fa-images" style="font-size: 48px; color: var(--accent-color); margin-bottom: 15px;"></i>
+                        <h3>Drag & Drop your image here</h3>
+                        <p>or click to browse files</p>
+                        <p class="text-muted">Supports JPG, PNG (Max 10MB)</p>
+                    </div>
+                </label>
+                <input type="file" id="file-input" name="image" accept="image/*" required>
+                
+                <div id="file-info" style="margin: 15px 0; display: none;">
+                    <p><strong>Selected file:</strong> <span id="file-name"></span></p>
+                </div>
+                
+                <div class="actions">
+                    <button type="submit" class="btn" id="submit-btn">
+                        <i class="fas fa-magic"></i> Segment Image
+                    </button>
+                    <button type="button" class="btn btn-outline" id="reset-btn">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing your image... This may take a moment.</p>
+        </div>
+        
+        {% if error %}
+        <div class="error">
+            <i class="fas fa-exclamation-circle"></i> <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+        
+        {% if result_image %}
+        <div class="card">
+            <h2><i class="fas fa-image"></i> Results</h2>
+            
+            <div class="result-container">
+                <div class="image-box">
+                    <h3>Original Image</h3>
+                    <img src="{{ original_image }}" alt="Original Image">
+                </div>
+                <div class="image-box">
+                    <h3>Segmented Image</h3>
+                    <img src="{{ result_image }}" alt="Segmented Image">
+                </div>
+            </div>
+            
+            <div class="actions">
+                <a href="{{ result_image }}" download="segmented_result.png" class="btn">
+                    <i class="fas fa-download"></i> Download Result
+                </a>
+                <button class="btn btn-outline" id="compare-btn">
+                    <i class="fas fa-exchange-alt"></i> Compare Images
+                </button>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <h4>Image Size</h4>
+                    <div class="stat-value">{{ width }}×{{ height }} px</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Processing Time</h4>
+                    <div class="stat-value">{{ processing_time }}s</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Model Used</h4>
+                    <div class="stat-value">DeepLabV3+</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <h2><i class="fas fa-palette"></i> Class Legend</h2>
+            <p>Understand what each color represents in the segmented image:</p>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="color-box" style="background-color: rgb(155, 155, 155);"></div>
+                    <span>0: Unlabeled</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box" style="background-color: rgb(60, 16, 152);"></div>
+                    <span>1: Building</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box" style="background-color: rgb(132, 41, 246);"></div>
+                    <span>2: Land</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box" style="background-color: rgb(110, 193, 228);"></div>
+                    <span>3: Road</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box" style="background-color: rgb(254, 221, 58);"></div>
+                    <span>4: Vegetation</span>
+                </div>
+                <div class="legend-item">
+                    <div class="color-box" style="background-color: rgb(226, 169, 41);"></div>
+                    <span>5: Water</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File upload interaction
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const fileName = document.getElementById('file-name');
+        const fileInfo = document.getElementById('file-info');
+        const form = document.getElementById('segmentation-form');
+        const loading = document.getElementById('loading');
+        const resetBtn = document.getElementById('reset-btn');
+        
+        // Handle drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('active');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('active');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('active');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateFileInfo();
+            }
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', updateFileInfo);
+        
+        function updateFileInfo() {
+            if (fileInput.files.length) {
+                fileName.textContent = fileInput.files[0].name;
+                fileInfo.style.display = 'block';
+                uploadArea.innerHTML = `
+                    <i class="fas fa-check-circle" style="font-size: 48px; color: var(--success-color); margin-bottom: 15px;"></i>
+                    <h3>${fileInput.files[0].name}</h3>
+                    <p>Ready for segmentation</p>
+                `;
+            }
+        }
+        
+        // Form submission
+        form.addEventListener('submit', () => {
+            loading.style.display = 'block';
+            document.getElementById('submit-btn').disabled = true;
+        });
+        
+        // Reset button
+        resetBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadArea.innerHTML = `
+                <i class="fas fa-images" style="font-size: 48px; color: var(--accent-color); margin-bottom: 15px;"></i>
+                <h3>Drag & Drop your image here</h3>
+                <p>or click to browse files</p>
+                <p class="text-muted">Supports JPG, PNG (Max 10MB)</p>
+            `;
+        });
+        
+        // Compare button functionality (if results exist)
+        {% if result_image %}
+        const compareBtn = document.getElementById('compare-btn');
+        let compareMode = false;
+        const originalImg = document.querySelector('.image-box:first-child img');
+        const resultImg = document.querySelector('.image-box:last-child img');
+        
+        compareBtn.addEventListener('click', () => {
+            compareMode = !compareMode;
+            
+            if (compareMode) {
+                originalImg.style.width = '50%';
+                originalImg.style.float = 'left';
+                resultImg.style.width = '50%';
+                resultImg.style.float = 'right';
+                compareBtn.innerHTML = '<i class="fas fa-times"></i> Exit Compare Mode';
+            } else {
+                originalImg.style.width = '100%';
+                originalImg.style.float = 'none';
+                resultImg.style.width = '100%';
+                resultImg.style.float = 'none';
+                compareBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> Compare Images';
+            }
+        });
+        {% endif %}
+    </script>
+</body>
+
+</html>
+{% endblock %}

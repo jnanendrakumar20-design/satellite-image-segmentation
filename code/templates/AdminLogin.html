@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block contents %}
+<style>
+    .admin-login-container {
+        max-width: 500px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        padding: 40px;
+        margin: 50px auto;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 0.8s ease-out;
+    }
+    
+    .admin-login-heading {
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(45deg, #FFA500, #FF4500);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        letter-spacing: 1px;
+        position: relative;
+        padding-bottom: 15px;
+    }
+    
+    .admin-login-heading::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, #FFA500, #FF4500);
+        border-radius: 3px;
+    }
+    
+    .admin-login-form .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .admin-login-form .form-control {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        height: 50px;
+        border-radius: 10px;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .admin-login-form .form-control:focus {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 165, 0, 0.5);
+        box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
+        color: white;
+    }
+    
+    .admin-login-form .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .admin-login-form label {
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .btn-admin {
+        background: linear-gradient(135deg, #FFA500, #FF4500);
+        border: none;
+        color: white;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 12px 30px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 69, 0, 0.4);
+        color: white;
+    }
+    
+    .btn-admin:active {
+        transform: translateY(0);
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .message-container {
+        margin-top: 20px;
+        text-align: center;
+        min-height: 24px;
+    }
+    
+    .message-container font {
+        font-weight: 500;
+        animation: fadeIn 0.5s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .login-icon {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .login-icon i {
+        font-size: 2.5rem;
+        color: #FFA500;
+        background: rgba(255, 255, 255, 0.1);
+        width: 80px;
+        height: 80px;
+        line-height: 80px;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<section class="content">
+    <div class="admin-login-container">
+        <div class="login-icon">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <h2 class="admin-login-heading">Admin Portal</h2>
+        
+        <form action="AdminLogincheck" method="POST" class="admin-login-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="loginid">Admin ID</label>
+                <input type="text" class="form-control" id="loginid" name="loginid" required 
+                       placeholder="Enter your admin ID" autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="pswd">Password</label>
+                <input type="password" class="form-control" id="pswd" name="pswd" required 
+                       placeholder="Enter your password" autocomplete="current-password">
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn btn-admin">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <button type="reset" class="btn btn-admin" style="background: rgba(255, 255, 255, 0.1);">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+            
+            <div class="message-container">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</section>
+
+<script>
+    // Add animation to form elements
+    document.querySelectorAll('.form-group').forEach((group, index) => {
+        group.style.animation = `fadeInUp 0.5s ease-out ${index * 0.1}s forwards`;
+        group.style.opacity = '0';
+    });
+</script>
+{% endblock %}

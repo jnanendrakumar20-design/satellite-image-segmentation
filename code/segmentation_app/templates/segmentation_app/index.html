@@ -1,0 +1,139 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Semantic Segmentation</title>
+</head>
+<body>
+    <h1>Upload an image for semantic segmentation</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Segment</button>
+    </form>
+
+{% if result_image %}
+    <h2>Result:</h2>
+    <img src="{{ result_image }}" alt="Result Image" />
+{% endif %}
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Semantic Segmentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-width: 500px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 30px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .legend {
+            margin-top: 30px;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-width: 500px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .color-box {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Upload an Image for Semantic Segmentation</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Segment</button>
+    </form>
+
+    <div class="result">
+        {% if result_image %}
+            <h2>Result:</h2>
+            <img src="{{ result_image }}" alt="Result Image">
+        {% endif %}
+    </div>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <div class="legend">
+        <h3>Color Legend:</h3>
+        <div class="legend-item">
+            <div class="color-box" style="background-color: rgb(155, 155, 155);"></div> 0: Unlabeled
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background-color: rgb(60, 16, 152);"></div> 1: Building
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background-color: rgb(132, 41, 246);"></div> 2: Land
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background-color: rgb(110, 193, 228);"></div> 3: Road
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background-color: rgb(254, 221, 58);"></div> 4: Vegetation
+        </div>
+        <div class="legend-item">
+            <div class="color-box" style="background-color: rgb(226, 169, 41);"></div> 5: Water
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,864 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block contents %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Image Segmentation - 3D Experience</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
+    <style>
+        /* Base styles from original template */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: #121212;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .hero-section {
+            padding: 4rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF6B35 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 2rem;
+            text-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5)); }
+            to { filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.8)); }
+        }
+
+        .info-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 900px;
+            margin: 2rem auto;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 1s ease-out;
+        }
+
+        .info-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2.5rem;
+            text-align: justify;
+            position: relative;
+            z-index: 2;
+        }
+
+        .info-text::first-letter {
+            font-size: 3rem;
+            font-weight: bold;
+            float: left;
+            line-height: 1;
+            margin-right: 8px;
+            margin-top: 4px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 50px;
+            box-shadow: 
+                0 10px 30px rgba(79, 172, 254, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .cta-button:hover::before {
+            left: 0;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 15px 40px rgba(79, 172, 254, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .cta-button i {
+            margin-left: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .cta-button:hover i {
+            transform: translateX(5px);
+        }
+
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) {
+            width: 60px;
+            height: 60px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            width: 40px;
+            height: 40px;
+            top: 20%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .floating-element:nth-child(3) {
+            width: 80px;
+            height: 80px;
+            bottom: 15%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(5deg); }
+            66% { transform: translateY(10px) rotate(-5deg); }
+        }
+
+        .stats-section {
+            margin-top: 4rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* New 3D Visualization Styles */
+        .visualization-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            max-width: 1000px;
+            margin: 0 auto 2rem;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        #earth-satellite-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+        }
+
+        .visualization-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .overlay-content {
+            pointer-events: auto;
+            text-align: left;
+        }
+
+        .overlay-content h2 {
+            font-size: 1.8rem;
+            margin: 0 0 0.5rem;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .overlay-content p {
+            margin: 0;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .controls-panel {
+            display: flex;
+            gap: 0.5rem;
+            pointer-events: auto;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .control-btn i {
+            font-size: 1rem;
+        }
+
+        /* Segmentation highlight effect */
+        .segmentation-highlight {
+            position: absolute;
+            border: 2px solid rgba(255, 215, 0, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .segmentation-highlight.active {
+            opacity: 1;
+        }
+
+        .segmentation-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 6;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .segmentation-label.active {
+            opacity: 1;
+        }
+
+        /* Loading indicator */
+        .loading-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 20;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+                letter-spacing: 1px;
+            }
+            
+            .info-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+            
+            .info-text {
+                font-size: 1.1rem;
+            }
+            
+            .stats-section {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+            
+            .visualization-container {
+                height: 350px;
+            }
+            
+            .overlay-content h2 {
+                font-size: 1.4rem;
+            }
+            
+            .controls-panel {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+            
+            .control-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <div class="floating-elements">
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+        </div>
+        
+        <h1 class="hero-title">Satellite Image Segmentation</h1>
+        
+        <!-- 3D Visualization Container -->
+        <div class="visualization-container">
+            <div id="earth-satellite-container"></div>
+            <div class="visualization-overlay">
+                <div class="overlay-content">
+                    <h2>Interactive Satellite Visualization</h2>
+                    <p>Explore our 3D satellite imagery system</p>
+                </div>
+                <div class="controls-panel">
+                    <button id="toggle-satellites" class="control-btn">
+                        <i class="fas fa-satellite"></i> Toggle Satellites
+                    </button>
+                    <button id="toggle-segmentation" class="control-btn">
+                        <i class="fas fa-layer-group"></i> Show Segmentation
+                    </button>
+                    <button id="reset-view" class="control-btn">
+                        <i class="fas fa-sync"></i> Reset View
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-container">
+            <p class="info-text">
+                This paper offers a deep learning approach for semantic satellite imagery segmentation utilizing a modified U-Net architecture. Leveraging a Dubai satellite imagery dataset, the model classifies six distinct land-use categories, including buildings, roads, vegetation, and water bodies. Preprocessing methods including patch creation, normalization, and class balance are incorporated into the implementation through augmenting data. Combining categorical focal loss and dice loss, which addresses class imbalance and improves segmentation accuracy, is one of the major advances. The study demonstrates the model's robustness in different fields of environmental monitoring and urban planning applications. Insights into spatial resolution challenges and model optimization strategies are also discussed.
+            </p>
+            <a href="#" class="cta-button">
+                Start Predicting
+                <i class="fas fa-rocket"></i>
+            </a>
+        </div>
+        
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-number">99.2%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">6</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">AI</div>
+                <div class="stat-label">Powered</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main Three.js variables
+        let scene, camera, renderer, controls;
+        let earth, satellites = [], segmentationHighlights = [];
+        let satelliteData = [];
+        let segmentationActive = false;
+
+        // Constants
+        const EARTH_RADIUS = 5;
+        const SATELLITE_COUNT = 6;
+        const SATELLITE_CATEGORIES = ['Buildings', 'Roads', 'Vegetation', 'Water', 'Barren Land', 'Unknown'];
+        const SATELLITE_COLORS = [0xFF5555, 0x55FF55, 0x5555FF, 0x55FFFF, 0xFFFF55, 0xFF55FF];
+
+        // Initialize the scene
+        function init() {
+            createScene();
+            createLights();
+            createEarth();
+            createSatellites();
+            createSegmentationHighlights();
+            addEventListeners();
+            animate();
+            
+            // Hide loading screen after initialization
+            setTimeout(() => {
+                const loadingContainer = document.createElement('div');
+                loadingContainer.className = 'loading-container';
+                loadingContainer.innerHTML = '<div class="loading-spinner"></div>';
+                document.getElementById('earth-satellite-container').appendChild(loadingContainer);
+                
+                setTimeout(() => {
+                    loadingContainer.classList.add('hidden');
+                }, 1500);
+            }, 100);
+        }
+
+        // Create the Three.js scene, camera, and renderer
+        function createScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(
+                45, 
+                document.getElementById('earth-satellite-container').offsetWidth / 
+                document.getElementById('earth-satellite-container').offsetHeight, 
+                0.1, 
+                1000
+            );
+            camera.position.set(0, 0, 20);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(
+                document.getElementById('earth-satellite-container').offsetWidth,
+                document.getElementById('earth-satellite-container').offsetHeight
+            );
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('earth-satellite-container').appendChild(renderer.domElement);
+            
+            // Add orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = EARTH_RADIUS * 1.5;
+            controls.maxDistance = EARTH_RADIUS * 10;
+        }
+
+        // Create lights for the scene
+        function createLights() {
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040, 1);
+            scene.add(ambientLight);
+            
+            // Directional light (sun)
+            const sunLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+            sunLight.position.set(10, 5, 8);
+            scene.add(sunLight);
+            
+            // Add a subtle blue point light to simulate atmosphere
+            const atmosphereLight = new THREE.PointLight(0x0077ff, 0.5, 20);
+            atmosphereLight.position.set(-5, 5, 5);
+            scene.add(atmosphereLight);
+        }
+
+        // Create Earth with realistic textures
+        function createEarth() {
+            // Earth geometry
+            const earthGeometry = new THREE.SphereGeometry(EARTH_RADIUS, 64, 64);
+            
+            // Earth material with basic color for now (would use textures in production)
+            const earthMaterial = new THREE.MeshPhongMaterial({
+                color: 0x2233FF,
+                shininess: 25,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            // Create mesh and add to scene
+            earth = new THREE.Mesh(earthGeometry, earthMaterial);
+            scene.add(earth);
+            
+            // Add cloud layer
+            const cloudGeometry = new THREE.SphereGeometry(EARTH_RADIUS + 0.1, 64, 64);
+            const cloudMaterial = new THREE.MeshPhongMaterial({
+                color: 0xFFFFFF,
+                transparent: true,
+                opacity: 0.3
+            });
+            const clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+            scene.add(clouds);
+            
+            // Add glow effect
+            const glowGeometry = new THREE.SphereGeometry(EARTH_RADIUS + 0.2, 64, 64);
+            const glowMaterial = new THREE.MeshPhongMaterial({
+                color: 0x0077ff,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.BackSide
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            scene.add(glow);
+            
+            // Add stars background
+            const starGeometry = new THREE.BufferGeometry();
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xFFFFFF,
+                size: 0.1
+            });
+            
+            const starVertices = [];
+            for (let i = 0; i < 10000; i++) {
+                const x = (Math.random() - 0.5) * 2000;
+                const y = (Math.random() - 0.5) * 2000;
+                const z = (Math.random() - 0.5) * 2000;
+                starVertices.push(x, y, z);
+            }
+            
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+        }
+
+        // Create satellite objects
+        function createSatellites() {
+            // Generate satellite data
+            for (let i = 0; i < SATELLITE_COUNT; i++) {
+                const angle = (i / SATELLITE_COUNT) * Math.PI * 2;
+                const distance = EARTH_RADIUS + 1.5 + Math.random() * 2;
+                const speed = 0.001 + Math.random() * 0.002;
+                const inclination = Math.random() * Math.PI / 4;
+                const categoryIndex = i % SATELLITE_CATEGORIES.length;
+                
+                satelliteData.push({
+                    angle,
+                    distance,
+                    speed,
+                    inclination,
+                    categoryIndex
+                });
+                
+                // Create satellite geometry
+                const satelliteGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.8);
+                
+                // Create satellite material
+                const satelliteMaterial = new THREE.MeshPhongMaterial({
+                    color: SATELLITE_COLORS[categoryIndex],
+                    shininess: 90,
+                    emissive: new THREE.Color(SATELLITE_COLORS[categoryIndex]).multiplyScalar(0.2)
+                });
+                
+                // Create satellite mesh
+                const satellite = new THREE.Mesh(satelliteGeometry, satelliteMaterial);
+                
+                // Add solar panels
+                const panelGeometry = new THREE.BoxGeometry(1.2, 0.05, 0.4);
+                const panelMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x2266FF,
+                    shininess: 100
+                });
+                
+                const leftPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+                leftPanel.position.x = -0.8;
+                satellite.add(leftPanel);
+                
+                const rightPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+                rightPanel.position.x = 0.8;
+                satellite.add(rightPanel);
+                
+                // Add satellite to scene
+                scene.add(satellite);
+                satellites.push(satellite);
+                
+                // Position satellite
+                updateSatellitePosition(i);
+            }
+        }
+
+        // Create segmentation highlight elements
+        function createSegmentationHighlights() {
+            // Create DOM elements for segmentation highlights
+            for (let i = 0; i < SATELLITE_COUNT; i++) {
+                // Create highlight circle
+                const highlight = document.createElement('div');
+                highlight.className = 'segmentation-highlight';
+                document.getElementById('earth-satellite-container').appendChild(highlight);
+                
+                // Create label
+                const label = document.createElement('div');
+                label.className = 'segmentation-label';
+                label.textContent = SATELLITE_CATEGORIES[i % SATELLITE_CATEGORIES.length];
+                document.getElementById('earth-satellite-container').appendChild(label);
+                
+                // Store references
+                segmentationHighlights.push({
+                    highlight,
+                    label
+                });
+            }
+        }
+
+        // Update satellite position based on its orbital parameters
+        function updateSatellitePosition(index) {
+            const data = satelliteData[index];
+            const satellite = satellites[index];
+            
+            // Calculate position based on orbital parameters
+            const x = Math.cos(data.angle) * data.distance;
+            const y = Math.sin(data.inclination) * data.distance;
+            const z = Math.sin(data.angle) * data.distance;
+            
+            // Update satellite position
+            satellite.position.set(x, y, z);
+            
+            // Make satellite face the direction of travel
+            satellite.lookAt(
+                Math.cos(data.angle + Math.PI/2) * data.distance,
+                Math.sin(data.inclination) * data.distance,
+                Math.sin(data.angle + Math.PI/2) * data.distance
+            );
+        }
+
+        // Update segmentation highlight positions
+        function updateSegmentationHighlights() {
+            if (!segmentationActive) return;
+            
+            for (let i = 0; i < satellites.length; i++) {
+                const satellite = satellites[i];
+                const highlight = segmentationHighlights[i].highlight;
+                const label = segmentationHighlights[i].label;
+                
+                // Convert 3D position to screen coordinates
+                const vector = new THREE.Vector3();
+                vector.setFromMatrixPosition(satellite.matrixWorld);
+                vector.project(camera);
+                
+                const x = (vector.x * 0.5 + 0.5) * renderer.domElement.width;
+                const y = (-(vector.y * 0.5) + 0.5) * renderer.domElement.height;
+                
+                // Check if satellite is in front of the camera
+                if (vector.z < 1) {
+                    // Position highlight
+                    highlight.style.left = `${x}px`;
+                    highlight.style.top = `${y}px`;
+                    highlight.style.width = `${40 + Math.sin(Date.now() * 0.002) * 10}px`;
+                    highlight.style.height = `${40 + Math.sin(Date.now() * 0.002) * 10}px`;
+                    highlight.style.opacity = '1';
+                    
+                    // Position label
+                    label.style.left = `${x}px`;
+                    label.style.top = `${y - 30}px`;
+                    label.style.opacity = '1';
+                } else {
+                    // Hide if behind camera
+                    highlight.style.opacity = '0';
+                    label.style.opacity = '0';
+                }
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate Earth
+            earth.rotation.y += 0.001;
+            
+            // Update satellite positions
+            for (let i = 0; i < satellites.length; i++) {
+                satelliteData[i].angle += satelliteData[i].speed;
+                updateSatellitePosition(i);
+            }
+            
+            // Update segmentation highlights
+            updateSegmentationHighlights();
+            
+            // Update controls
+            controls.update();
+            
+            // Render scene
+            renderer.render(scene, camera);
+        }
+
+        // Add event listeners for interactive controls
+        function addEventListeners() {
+            // Toggle satellites visibility
+            document.getElementById('toggle-satellites').addEventListener('click', function() {
+                satellites.forEach(satellite => {
+                    satellite.visible = !satellite.visible;
+                });
+            });
+            
+            // Toggle segmentation mode
+            document.getElementById('toggle-segmentation').addEventListener('click', function() {
+                segmentationActive = !segmentationActive;
+                
+                segmentationHighlights.forEach(({highlight, label}) => {
+                    if (segmentationActive) {
+                        highlight.classList.add('active');
+                        label.classList.add('active');
+                    } else {
+                        highlight.classList.remove('active');
+                        label.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Reset view
+            document.getElementById('reset-view').addEventListener('click', function() {
+                camera.position.set(0, 0, 20);
+                controls.reset();
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                camera.aspect = document.getElementById('earth-satellite-container').offsetWidth / 
+                                document.getElementById('earth-satellite-container').offsetHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(
+                    document.getElementById('earth-satellite-container').offsetWidth,
+                    document.getElementById('earth-satellite-container').offsetHeight
+                );
+            });
+        }
+
+        // Initialize when DOM is loaded
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'admins/adminbase.html' %}
+{% load static %}
+{% block contents %}
+<style>
+    .user-records-container {
+        background: rgba(13, 43, 78, 0.85);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        padding: 2rem;
+        margin-top: 2rem;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .section-header h2 {
+        font-size: 2rem;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(90deg, #FFA500, #FF4500);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .section-header p {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1rem;
+    }
+
+    .user-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 10px;
+        margin-top: 1.5rem;
+    }
+
+    .user-table thead th {
+        background: linear-gradient(135deg, #1a4b8c, #2a7ae9);
+        color: white;
+        padding: 1rem;
+        font-weight: 600;
+        text-align: left;
+        border: none;
+    }
+
+    .user-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .user-table tbody tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .user-table tbody tr:nth-child(odd) {
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .user-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-table td {
+        padding: 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .status-pending {
+        color: #FFC107;
+        font-weight: 500;
+    }
+
+    .status-active {
+        color: #28a745;
+        font-weight: 500;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-right: 0.5rem;
+    }
+
+    .activate-btn {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+        border: 1px solid #28a745;
+    }
+
+    .activate-btn:hover {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .delete-btn {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border: 1px solid #dc3545;
+    }
+
+    .delete-btn:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .action-btn i {
+        margin-right: 5px;
+        font-size: 0.8rem;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive table */
+    @media (max-width: 768px) {
+        .user-table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .section-header h2 {
+            font-size: 1.6rem;
+        }
+        
+        .action-btn {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+        }
+    }
+</style>
+
+<section class="content">
+    <div class="user-records-container">
+        <div class="section-header">
+            <h2><i class="fas fa-users-cog"></i> User Management</h2>
+            <p>Manage all registered users in the system</p>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Name</th>
+                        <th>Login ID</th>
+                        <th>Mobile</th>
+                        <th>Email</th>
+                        <th>Locality</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in data %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ i.name }}</td>
+                        <td>{{ i.loginid }}</td>
+                        <td>{{ i.mobile }}</td>
+                        <td>{{ i.email }}</td>
+                        <td>{{ i.locality }}</td>
+                        <td class="{% if i.status == 'waiting' %}status-pending{% else %}status-active{% endif %}">
+                            {{ i.status|title }}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                {% if i.status == 'waiting' %}
+                                <a href="{% url 'activate_users' %}?uid={{ i.id }}" class="action-btn activate-btn">
+                                    <i class="fas fa-check-circle"></i> Activate
+                                </a>
+                                {% else %}
+                                <a href="{% url 'delete_users' %}?uid={{ i.id }}" class="action-btn delete-btn">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Add animation to table rows
+    document.addEventListener('DOMContentLoaded', function() {
+        const rows = document.querySelectorAll('.user-table tbody tr');
+        rows.forEach((row, index) => {
+            row.style.animationDelay = `${index * 0.05}s`;
+            row.classList.add('fade-in');
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends 'users/userbase.html' %}
+
+{% block contents %}
+{% load static %}
+
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .result-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+
+    .confidence-section {
+        margin: 2rem 0;
+        text-align: center;
+    }
+
+    .confidence-gauge {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .confidence-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #00f2fe;
+        text-shadow: 0 0 20px rgba(0, 242, 254, 0.5);
+    }
+
+    .confidence-label {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-top: -0.5rem;
+    }
+
+    .image-wrapper {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--shadow-strong);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .image-wrapper:hover {
+        transform: scale(1.02);
+    }
+
+    .result-image {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .legend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.5rem;
+        margin-top: 3rem;
+    }
+
+    .legend-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    .legend-item:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-5px);
+    }
+
+    .color-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin-right: 1rem;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .legend-text {
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.8rem 1.8rem;
+        background: var(--accent-gradient);
+        color: white;
+        text-decoration: none;
+        border-radius: 14px;
+        margin-top: 3rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    }
+
+    .back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 172, 254, 0.5);
+        color: white;
+    }
+
+    .back-btn i {
+        margin-right: 0.5rem;
+    }
+
+    /* SVG Progress Ring */
+    .progress-ring {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .progress-ring-circle {
+        transition: stroke-dashoffset 1s ease-in-out;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+</style>
+
+<div class="glass-card">
+    <div class="result-header">
+        <h1>Analysis Result</h1>
+        <p class="text-white-50">Segmentation model has processed your image successfully.</p>
+    </div>
+
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <div class="image-wrapper">
+                {% if result_image %}
+                    <img src="{{ result_image }}" alt="Segmented Output" class="result-image">
+                {% else %}
+                    <div class="p-5 text-center text-white-50">
+                        <i class="fas fa-image fa-4x mb-3"></i>
+                        <p>No result image found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="confidence-section">
+                <div class="confidence-gauge">
+                    <svg class="progress-ring" width="200" height="200">
+                        <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.05)" stroke-width="12" fill="transparent" r="90" cx="100" cy="100"/>
+                        <circle class="progress-ring-circle" id="confidence-circle" stroke="#00f2fe" stroke-width="12" stroke-linecap="round" fill="transparent" r="90" cx="100" cy="100" style="stroke-dasharray: 565.48; stroke-dashoffset: 565.48;"/>
+                    </svg>
+                    <div class="text-center">
+                        <div class="confidence-value" id="confidence-text">0%</div>
+                        <div class="confidence-label">CONFIDENCE SCORE</div>
+                    </div>
+                </div>
+                <div class="mt-4 px-4">
+                    <p class="text-white-50 small">Based on DeepLabV3+ pixel-wise classification probability averages.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend-grid">
+        <div class="legend-item">
+            <div class="color-dot" style="background-color: rgb(155, 155, 155);"></div>
+            <span class="legend-text">Unlabeled</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-dot" style="background-color: rgb(60, 16, 152);"></div>
+            <span class="legend-text">Building</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-dot" style="background-color: rgb(132, 41, 246);"></div>
+            <span class="legend-text">Land</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-dot" style="background-color: rgb(110, 193, 228);"></div>
+            <span class="legend-text">Road</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-dot" style="background-color: rgb(254, 221, 58);"></div>
+            <span class="legend-text">Vegetation</span>
+        </div>
+        <div class="legend-item">
+            <div class="color-dot" style="background-color: rgb(226, 169, 41);"></div>
+            <span class="legend-text">Water</span>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <a href="{% url 'predict' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Run Another Analysis
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const confidence = {{ confidence|default:0 }};
+        const circle = document.getElementById('confidence-circle');
+        const text = document.getElementById('confidence-text');
+        const radius = circle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100 * circumference);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        // Animate count and circle
+        let currentPerc = 0;
+        const interval = setInterval(() => {
+            if (currentPerc >= confidence) {
+                clearInterval(interval);
+            } else {
+                currentPerc += 1;
+                if (currentPerc > confidence) currentPerc = confidence;
+                text.innerText = currentPerc + '%';
+                setProgress(currentPerc);
+            }
+        }, 20);
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'users/userbase.html' %}
+
+{% block contents %}
+{% load static %}
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        background-image: url("{% static 'img/bg4.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color: white;
+        min-height: 100vh;
+        overflow: hidden;
+    }
+
+    .center-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+        padding-left: 320px; /* accounting for sidebar nav */
+    }
+
+    .content-box {
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 40px;
+        border-radius: 15px;
+        max-width: 700px;
+    }
+
+    .content-box h2 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: #00e6e6;
+    }
+
+    .content-box p {
+        font-size: 1.2rem;
+        line-height: 1.6;
+        color: #f0f0f0;
+    }
+</style>
+
+<div class="center-content">
+    <div class="content-box">
+        <h2>Welcome to Satellite Image Segmentation</h2>
+        <p>
+            This paper offers a deep learning approach for
+semantic satellite imagery segmentation utilizing a modified U-
+Net architecture. Leveraging a Dubai satellite imagery dataset,
+the model classifies six distinct land-use categories, including
+buildings, roads, vegetation, and water bodies. Preprocessing
+methods including patch creation, normalization, and class bal-
+ance are incorporated into the implementation through augment-
+ing data. Combining categorical focal loss and dice loss, which
+addresses class imbalance and improves segmentation accuracy, is
+one of the major advances.The study demonstrates the model’s
+robustness in different fields of environmental monitoring and
+urban planning applications. Insights into spatial resolution
+challenges and model optimization strategies are also discussed.
+        </p>
+    </div>
+</div>
+
+{% endblock %}
